@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "dev": "concurrently \"cd backend && uvicorn app:app --reload --port 8080\" \"cd frontend && npm start\" \"cd frontend/electron && npm start\""
+        "dev": "concurrently \"cd backend && python -m uvicorn app:app --reload --port 8080\" \"cd frontend && npm start\" \"cd frontend/electron && npm start\""
     },
     "devDependencies": {
         "concurrently": "^9.1.2"
