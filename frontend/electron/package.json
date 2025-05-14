@@ -1,0 +1,36 @@
+{
+    "name": "app",
+    "version": "1.0.0",
+    "main": "dist/main.js",
+    "build": {
+        "appId": "com.seu.app.id",
+        "productName": "MeuAppTeste",
+        "directories": {
+            "buildResources": "assets"
+        },
+        "files": [
+            "../build/**/*",
+            "dist/**/*",
+            "../backend/**/*"
+        ],
+        "extraResources": [
+            {
+                "from": "../backend",
+                "to": "backend"
+            }
+        ],
+        "win": {
+            "target": "nsis"
+        }
+    },
+    "scripts": {
+        "start": "tsc && electron .",
+        "dist": "npm run build-react && tsc && electron-builder",
+        "build-react": "cd ../ && npm run build"
+    },
+    "devDependencies": {
+        "electron": "^28.3.3",
+        "electron-builder": "^24.6.0",
+        "typescript": "^4.9.5"
+    }
+}
