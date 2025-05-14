@@ -8,15 +8,16 @@ app.on("ready", () => {
     pythonProcess = spawn("python", ["../../backend/app.py"]);
 
     mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 816,
+        height: 700,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
         },
     });
 
-    mainWindow.loadFile("../build/index.html");
+    // mainWindow.loadFile("../build/index.html"); // Uncomment this line to load the React app from build folder
+    mainWindow.loadURL("http://localhost:3000");
 
     mainWindow.on("closed", () => {
         mainWindow = null;

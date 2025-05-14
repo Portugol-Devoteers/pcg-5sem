@@ -1,14 +1,11 @@
-import axios from "axios";
-import { useEffect, useState } from "react";
+import B3Dashboard from "./pages/B3Dashboard";
 
-export const App = () => {
-    const [message, setMessage] = useState<string>("");
+function App() {
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <B3Dashboard />
+        </div>
+    );
+}
 
-    useEffect(() => {
-        axios.get("http://localhost:8080").then((response) => {
-            setMessage(response.data.message);
-        });
-    }, []);
-
-    return <h1>{message}</h1>;
-};
+export default App;
