@@ -94,6 +94,10 @@ def backtest_predict(company_id: int, data_simulada: str, modelo: str):
             rows = cur.fetchall()
 
     df = pd.DataFrame(rows)
+
+    if df.empty:
+        return {"error": "Nenhum dado retornado do banco para essa empresa."}
+
     df = df.sort_values("date").reset_index(drop=True)
 
     if len(df) < 61:
