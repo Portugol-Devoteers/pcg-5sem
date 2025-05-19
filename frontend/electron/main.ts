@@ -8,8 +8,8 @@ app.on("ready", () => {
     pythonProcess = spawn("python", ["../../backend/app.py"]);
 
     mainWindow = new BrowserWindow({
-        width: 816,
-        height: 700,
+        width: 1300,
+        height: 900,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
