@@ -89,20 +89,19 @@ def train(df: pd.DataFrame, sequence_length: int = 60, predict_days: int = 1):
     return model, scaler_X, scaler_y, result_df
 
 if __name__ == "__main__":
-
-    #tempo de execucao  
-    start_time = datetime.now()
-
     sequence_length = int(sys.argv[2]) if len(sys.argv) > 2 else 60
     predict_days = int(sys.argv[3]) if len(sys.argv) > 3 else 7
 
     company_id = sys.argv[1]
+    model_id = 1  
     filename = f"../../data_prediction/get_data/features/{company_id}_dataset.parquet"
     df = pd.read_parquet(filename)
 
     model, scaler_X, scaler_y, future_df = train(df, sequence_length=sequence_length, predict_days=predict_days)
 
+    output_path = f"../../data_prediction/predictions_temp/{company_id}_{model_id}.parquet"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    future_df.to_parquet(output_path, index=False)
+
     print("Previsões para os próximos dias:")
     print(future_df)
-    print(f"Tempo de execução: {datetime.now() - start_time}")
-
