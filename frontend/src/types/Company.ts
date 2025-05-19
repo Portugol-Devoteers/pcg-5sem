@@ -4,4 +4,5 @@ export interface Company {
     sector: string;
     price: number;
     variation: number;
+    updated_at: string;
 }

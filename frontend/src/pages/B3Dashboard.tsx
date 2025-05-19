@@ -34,10 +34,6 @@ export default function B3Dashboard() {
         fetchData();
     }, []);
 
-    const companiesToShow = selectedSector
-        ? companies.filter((c) => c.sector === selectedSector)
-        : [];
-
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
@@ -62,7 +58,7 @@ export default function B3Dashboard() {
     };
 
     return (
-        <div className="w-[800px] h-[600px] overflow-hidden bg-white text-slate-900 rounded-2xl shadow-lg p-4 space-y-4">
+        <div className="w-[1000px] h-[700px] overflow-hidden bg-white text-slate-900 rounded-2xl shadow-lg p-4 space-y-4">
             <Header
                 searchTerm={searchTerm}
                 suggestions={filteredSuggestions}
@@ -70,7 +66,7 @@ export default function B3Dashboard() {
                 onSelect={handleSelectSuggestion}
             />
 
-            <div className="flex h-[calc(100%-80px)] space-x-4 overflow-hidden">
+            <div className="flex h-[calc(100%-60px)] space-x-4 overflow-hidden">
                 <SectorSidebar
                     sectors={sectors}
                     selectedSector={selectedSector}
@@ -83,7 +79,7 @@ export default function B3Dashboard() {
                     onSelectCompany={(company) => setSelectedCompany(company)}
                 />
 
-                <div className="flex-1 overflow-y-auto pb-4">
+                <div className="flex-1 overflow-y-auto pb-4 pr-1">
                     <CompanyDetails company={selectedCompany} />
                 </div>
             </div>

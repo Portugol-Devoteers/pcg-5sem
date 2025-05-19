@@ -24,7 +24,7 @@ export const Header = ({
                 className="w-full"
             />
             {suggestions.length > 0 && (
-                <ul className="absolute z-10 w-full bg-white border border-slate-300 rounded shadow mt-1 text-sm max-h-60 overflow-y-auto">
+                <ul className="absolute z-10 w-full bg-white border border-slate-300 rounded shadow mt-1 text-sm max-h-60 overflow-y-auto pr-1">
                     {suggestions.map((item, index) => (
                         <li
                             key={`${item.ticker}-${index}`}

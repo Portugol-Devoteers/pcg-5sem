@@ -23,7 +23,7 @@ export const SectorSidebar = ({
         : [];
 
     return (
-        <div className="w-[200px] space-y-4 overflow-y-auto">
+        <div className="w-[250px] space-y-4 overflow-y-auto pr-1">
             <Card className="p-4">
                 <strong className="block mb-2">🎯 Setores</strong>
                 <ul className="space-y-2 text-sm">
