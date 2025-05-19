@@ -10,25 +10,32 @@ from tensorflow.keras.models import Sequential  # type: ignore
 from tensorflow.keras.layers import GRU, Dense, Dropout  # type: ignore
 from tensorflow.keras import Input  # type: ignore
 import sys
+import re
+from datetime import datetime, timedelta
 
 # Fixar aleatoriedade
 SEED = 42
 
 def train(df: pd.DataFrame, sequence_length: int = 60, predict_days: int = 1):
-    # Fixar seed novamente aqui
     import random
     random.seed(SEED)
     np.random.seed(SEED)
     tf.random.set_seed(SEED)
 
-    # Se houver colunas de concorrentes, inclui
-    concorrente_cols = [col for col in df.columns if col.startswith("concorrente_")]
+    pattern_concorrente = re.compile(r"^\\d+_.*")
+    pattern_macro = re.compile(r"^(macro_|acct_)")
 
-    feature_cols = ['close', 'volume', 'selic', 'ipca', 'usd_brl', 'ibov'] + concorrente_cols
-    df[feature_cols] = df[feature_cols].astype(float)
+    target_cols = [col for col in df.columns if col not in ['date'] and not pattern_concorrente.match(col) and not pattern_macro.match(col)]
+    exog_cols = [col for col in df.columns if col not in ['date'] and col not in target_cols]
+
+    df[target_cols + exog_cols] = df[target_cols + exog_cols].astype(float)
+    df.dropna(inplace=True)
+
+    feature_cols = target_cols + exog_cols
+    target_col = 'close' if 'close' in df.columns else target_cols[0]
 
     X_data = df[feature_cols].values
-    y_data = df[['close']].values
+    y_data = df[[target_col]].values
 
     scaler_X = MinMaxScaler()
     scaler_y = MinMaxScaler()
@@ -54,70 +61,48 @@ def train(df: pd.DataFrame, sequence_length: int = 60, predict_days: int = 1):
     model.compile(optimizer='adam', loss='mean_squared_error')
     model.fit(X, y, epochs=20, batch_size=32, verbose=0)
 
-    # Previsão recursiva dos próximos N dias
     last_sequence = X_scaled[-sequence_length:].copy()
     future_scaled_preds = []
+    future_dates = []
 
-    for _ in range(predict_days):
+    last_date = pd.to_datetime(df['date'].iloc[-1], unit='ms') if isinstance(df['date'].iloc[-1], (int, float)) else pd.to_datetime(df['date'].iloc[-1])
+
+    for i in range(predict_days):
         input_seq = last_sequence.reshape(1, sequence_length, len(feature_cols))
         next_scaled = model.predict(input_seq, verbose=0)[0][0]
         future_scaled_preds.append(next_scaled)
 
         new_row = last_sequence[-1].copy()
-        new_row[0] = next_scaled  # substitui 'close' previsto
+        new_row[feature_cols.index(target_col)] = next_scaled
         last_sequence = np.vstack([last_sequence[1:], new_row])
+
+        future_dates.append(last_date + timedelta(days=i + 1))
 
     future_scaled_preds = np.array(future_scaled_preds).reshape(-1, 1)
     future_preds = scaler_y.inverse_transform(future_scaled_preds)
 
-    return model, scaler_X, scaler_y, future_preds
+    result_df = pd.DataFrame({
+        'date': future_dates,
+        'value': future_preds.flatten()
+    })
+
+    return model, scaler_X, scaler_y, result_df
 
 if __name__ == "__main__":
-    import psycopg
 
-    conn = psycopg.connect(
-        dbname="tcc_b3",
-        user="postgres",
-        password="postgres",  # troque se necessário
-        host="localhost",
-        port="5432"
-    )
+    #tempo de execucao  
+    start_time = datetime.now()
 
-    sequence_length = int(sys.argv[1]) if len(sys.argv) > 1 else 60
-    predict_days = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+    sequence_length = int(sys.argv[2]) if len(sys.argv) > 2 else 60
+    predict_days = int(sys.argv[3]) if len(sys.argv) > 3 else 7
 
-    query = """
-        SELECT 
-            ph.date,
-            ph.close,
-            ph.volume,
-            MAX(CASE WHEN mi.name = 'SELIC' THEN mv.value END) AS selic,
-            MAX(CASE WHEN mi.name = 'IPCA' THEN mv.value END) AS ipca,
-            MAX(CASE WHEN mi.name = 'USD/BRL' THEN mv.value END) AS usd_brl,
-            MAX(CASE WHEN mi.name = 'IBOV' THEN mv.value END) AS ibov
-        FROM 
-            companies c
-        JOIN
-            price_history ph ON c.id = ph.company_id
-        JOIN
-            macro_values mv ON mv.date = ph.date
-        JOIN 
-            macro_indicators mi ON mv.macro_indicator_id = mi.id
-        WHERE 
-            c.b3_code = 'PETR4.SA'
-        GROUP BY
-            ph.date, ph.close, ph.volume
-        ORDER BY 
-            ph.date ASC
-    """
+    company_id = sys.argv[1]
+    filename = f"../../data_prediction/get_data/features/{company_id}_dataset.parquet"
+    df = pd.read_parquet(filename)
 
-    with conn.cursor() as cur:
-        cur.execute(query)
-        columns = [desc[0] for desc in cur.description]
-        data = cur.fetchall()
-        df = pd.DataFrame(data, columns=columns)
-
-    model, scaler_X, scaler_y, future_preds = train(df, sequence_length=sequence_length, predict_days=predict_days)
+    model, scaler_X, scaler_y, future_df = train(df, sequence_length=sequence_length, predict_days=predict_days)
 
     print("Previsões para os próximos dias:")
-    print(future_preds)
+    print(future_df)
+    print(f"Tempo de execução: {datetime.now() - start_time}")
+
