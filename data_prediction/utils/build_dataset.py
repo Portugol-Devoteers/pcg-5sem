@@ -86,4 +86,13 @@ def build_dataset(empresa_nome:str, horizon:int=7, lookback_years:int=4):
 
 # uso direto para testar
 if __name__ == "__main__":
-    build_dataset("Petrobras")
+
+    with get_conn() as conn, conn.cursor() as cur:
+        
+        cur.execute("SELECT name FROM companies")
+        res = cur.fetchall()
+
+        for r in res: 
+            build_dataset(r[0])
+
+    # build_dataset("Petrobras")
