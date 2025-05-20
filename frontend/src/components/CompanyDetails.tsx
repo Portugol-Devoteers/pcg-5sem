@@ -1,12 +1,31 @@
+import { useEffect, useState } from "react";
 import { Card } from "../components/ui/card";
 import { Company } from "../types/Company";
 import { LineGraph } from "./LineGraph";
+import axios from "axios";
 
 interface Props {
     company: Company | null;
 }
 
 export const CompanyDetails = ({ company }: Props) => {
+    const [graphData, setGraphData] = useState([]);
+
+    useEffect(() => {
+        if (company) {
+            const fetchGraphData = async () => {
+                const [graphRes, _] = await Promise.all([
+                    axios.get(
+                        `http://localhost:8080/prediction/${company.ticker}`
+                    ),
+                    axios.get(""),
+                ]);
+                setGraphData(graphRes.data);
+            };
+            fetchGraphData();
+        }
+    }, [company]);
+
     if (!company) {
         return (
             <div className="flex items-center justify-center h-full text-sm text-muted">
@@ -49,49 +68,11 @@ export const CompanyDetails = ({ company }: Props) => {
                     {company.variation.toFixed(2)}%
                 </p>
 
-                <div className="mt-6 h-40">
-                    <LineGraph
-                        data={[
-                            {
-                                date: "01/10/2025",
-                                XGBoost: 120,
-                                GRU: 125,
-                                LSTM: 130,
-                                Real: 2,
-                            },
-                            {
-                                date: "02/10/2025",
-                                XGBoost: 122,
-                                GRU: 127,
-                                LSTM: 132,
-                                Real: 122,
-                            },
-                            {
-                                date: "03/10/2025",
-                                XGBoost: 121,
-                                GRU: 126,
-                                LSTM: 131,
-                                Real: 122,
-                            },
-                            {
-                                date: "04/10/2025",
-                                XGBoost: 123,
-                                GRU: 128,
-                                LSTM: 3,
-                                Real: 122,
-                            },
-                            {
-                                date: "05/10/2025",
-                                XGBoost: 124,
-                                GRU: 129,
-                                LSTM: 50,
-                                Real: 122,
-                            },
-                        ]}
-                    />
+                <div className="mt-4">
+                    <LineGraph data={graphData} />
                 </div>
 
-                <div className="pt-2 text-xs text-slate-400">
+                <div className="text-xs text-slate-400">
                     Atualizado em 14/05/2025
                 </div>
             </Card>
