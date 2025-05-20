@@ -24,3 +24,5 @@ yarn-error.log*
 
 __pycache__/
 dist
+.venv312
+*.parquet
