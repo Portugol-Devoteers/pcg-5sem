@@ -27,6 +27,6 @@ def get_companies():
 def get_sectors():
     return get_sectors_from_db()
 
-@app.get("/prediction/{company_id}")
-def get_prediction(company_id: int):
-    return get_prediction_from_db(company_id)
+@app.get("/prediction/{ticker}")
+def get_prediction(ticker: str):
+    return get_prediction_from_db(ticker)
