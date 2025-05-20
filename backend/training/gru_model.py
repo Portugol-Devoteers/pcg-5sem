@@ -25,7 +25,7 @@ def train(df: pd.DataFrame, sequence_length: int = 60, predict_days: int = 1):
     pattern_concorrente = re.compile(r"^\\d+_.*")
     pattern_macro = re.compile(r"^(macro_|acct_)")
 
-    target_cols = [col for col in df.columns if col not in ['date'] and not pattern_concorrente.match(col) and not pattern_macro.match(col)]
+    target_cols = [col for col in df.columns if col not in ['date', 'open', 'high', 'low', 'volume'] and not pattern_concorrente.match(col) and not pattern_macro.match(col)]
     exog_cols = [col for col in df.columns if col not in ['date'] and col not in target_cols]
 
     df[target_cols + exog_cols] = df[target_cols + exog_cols].astype(float)
