@@ -38,15 +38,26 @@ def insert_all_predictions():
                             cur.execute("""
                                 INSERT INTO predictions (date, model_id, value, b3_code_id, history_columns_id, updated_by_user_id)
                                 VALUES (%s, %s, %s, %s, %s, %s)
-                            """, (pd.to_datetime(row['date']), int(model_id), float(row['value']), int(b3_code_id), HISTORY_COLUMNS_ID, 2))
-                        except:
-                            print(f"Erro ao inserir linha: {row}")
-                            continue
+                            """, (
+                                pd.to_datetime(row['date']),
+                                int(model_id),
+                                float(row['value']),
+                                int(b3_code_id),
+                                HISTORY_COLUMNS_ID,
+                                2
+                            ))
+                        except Exception as e:
+                            conn.rollback()  # volta apenas essa operação
+                            print(f"⚠️ Erro ao inserir linha: {row['date']} | Motivo: {e}")
+                            continue  # tenta a próxima linha
+
+                    conn.commit()  # salva todas as válidas
+
             os.remove(caminho)
-            print(f"Inserido com sucesso e deletado: {nome_arquivo}")
+            print(f"✅ Inserido com sucesso e deletado: {nome_arquivo}")
 
         except Exception as e:
-            print(f"Erro ao inserir {nome_arquivo}: {e}")
+            print(f"❌ Erro ao inserir {nome_arquivo}: {e}")
 
 if __name__ == "__main__":
     insert_all_predictions()
