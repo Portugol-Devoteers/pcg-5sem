@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from services.companies_service import get_companies_from_db
 from services.sectors_service import get_sectors_from_db
+from services.prediction_service import get_prediction_from_db
 
 
 app = FastAPI()
@@ -25,3 +26,7 @@ def get_companies():
 @app.get("/sectors")
 def get_sectors():
     return get_sectors_from_db()
+
+@app.get("/prediction/{company_id}")
+def get_prediction(company_id: int):
+    return get_prediction_from_db(company_id)
