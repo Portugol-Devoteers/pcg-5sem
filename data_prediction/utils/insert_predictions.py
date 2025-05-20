@@ -34,11 +34,14 @@ def insert_all_predictions():
             with get_connection() as conn:
                 with conn.cursor() as cur:
                     for _, row in df.iterrows():
-                        cur.execute("""
-                            INSERT INTO predictions (date, model_id, value, b3_code_id, history_columns_id, updated_by_user_id)
-                            VALUES (%s, %s, %s, %s, %s, %s)
-                        """, (pd.to_datetime(row['date']), int(model_id), float(row['value']), int(b3_code_id), HISTORY_COLUMNS_ID, 2))
-
+                        try:
+                            cur.execute("""
+                                INSERT INTO predictions (date, model_id, value, b3_code_id, history_columns_id, updated_by_user_id)
+                                VALUES (%s, %s, %s, %s, %s, %s)
+                            """, (pd.to_datetime(row['date']), int(model_id), float(row['value']), int(b3_code_id), HISTORY_COLUMNS_ID, 2))
+                        except:
+                            print(f"Erro ao inserir linha: {row}")
+                            continue
             os.remove(caminho)
             print(f"Inserido com sucesso e deletado: {nome_arquivo}")
 
