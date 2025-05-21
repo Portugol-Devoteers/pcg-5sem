@@ -27,3 +27,7 @@ dist
 .venv312
 *.parquet
 *.bat
+*.xlsx
+*.log
+*.zip
+predictions_temp
