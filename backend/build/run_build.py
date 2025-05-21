@@ -1,15 +1,15 @@
-# %%
 from data_capture.run_create_table import run_create_table
 from data_prediction.get_data.run_get_data import run_get_data
 from data_prediction.utils.build_dataset import run_build_dataset
 from training.run_models import run_models
 from data_prediction.utils.insert_predictions import run_insert_predictions
-
+import time
 
 def run_build():
     """
     Executa o processo de construção do banco de dados.
     """
+    start_time = time.time()
     print("🔄 Iniciando o processo de construção do banco de dados...")
 
     # Passo 1: Criar tabelas
@@ -28,6 +28,8 @@ def run_build():
     run_insert_predictions()
 
     print("✅ Processo de construção do banco de dados concluído.")
-
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"⏱️ Tempo total: {elapsed_time:.2f} segundos.")
 if __name__ == "__main__":
     run_build()
