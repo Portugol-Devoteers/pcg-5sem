@@ -15,7 +15,7 @@ def run_models():
     # Parâmetros da CLI
     def get_cli_args():
         company_id = sys.argv[1] if len(sys.argv) > 1 else None
-        sequence_length = int(sys.argv[2]) if len(sys.argv) > 2 else 900
+        sequence_length = int(sys.argv[2]) if len(sys.argv) > 2 else 800
         predict_days = int(sys.argv[3]) if len(sys.argv) > 3 else 7
         return company_id, sequence_length, predict_days
 
