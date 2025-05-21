@@ -1,3 +1,4 @@
+# %%
 from data_capture.run_create_table import run_create_table
 from data_prediction.get_data.run_get_data import run_get_data
 from data_prediction.utils.build_dataset import run_build_dataset

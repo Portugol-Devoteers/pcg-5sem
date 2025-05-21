@@ -30,9 +30,7 @@ def run_create_table():
     for i, ticker in enumerate(tickers, start=1):
         try:
             print(f"\n🔄 Processando {ticker} ({i}/{total_tickers})...")
-            files = export_company_data_to_files(ticker)
-            print("✅ Arquivos salvos:")
-            print(files["excel"])
+            export_company_data_to_files(ticker)
         except Exception as e:
             print(f"❌ Erro ao processar {ticker} ({i}/{total_tickers}): {e}")
 
