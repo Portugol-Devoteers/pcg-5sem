@@ -12,16 +12,16 @@ def run_build():
     print("🔄 Iniciando o processo de construção do banco de dados...")
 
     # Passo 1: Criar tabelas
-    # run_create_table()
+    run_create_table()
 
     # Passo 2: Coletar dados
-    # run_get_data()
+    run_get_data()
 
     # Passo 3: Construir dataset
-    # run_build_dataset()
+    run_build_dataset()
 
     # Passo 4: Treinar modelos
-    # run_models()
+    run_models()
 
     # Passo 5: Inserir previsões no banco de dados
     run_insert_predictions()
