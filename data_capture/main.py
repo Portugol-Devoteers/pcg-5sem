@@ -1,11 +1,13 @@
 from coletar_dados_b3 import export_company_data_to_files
 import psycopg
 import os
-from accounts_creat import insert_financial_accounts_from_csvs
-from financial_statements_creat import insert_financial_statements_from_csvs
-from history_creat import insert_price_history_from_csvs
-from descriptive_stats_creat import insert_descriptive_stats_from_csvs
-from macro_values_creat import inserir_macro_values
+import shutil
+
+from accounts_creat import insert_financial_accounts_from_parquets
+from financial_statements_creat import insert_financial_statements_from_parquets
+from history_creat import insert_price_history_from_parquets
+from descriptive_stats_creat import insert_descriptive_stats_from_parquets
+from macro_values_creat import inserir_macro_values  # Mantém, pois coleta direto das APIs
 
 # Conexão com o banco
 conn = psycopg.connect(
@@ -28,17 +30,33 @@ for i, ticker in enumerate(tickers, start=1):
     try:
         print(f"\n🔄 Processando {ticker} ({i}/{total_tickers})...")
         files = export_company_data_to_files(ticker)
-        print("✅ Arquivos salvos:")
-        print(files["excel"])
+        # print("✅ Arquivos salvos:")
+        # print(files["excel"])
     except Exception as e:
         print(f"❌ Erro ao processar {ticker} ({i}/{total_tickers}): {e}")
 
-insert_financial_accounts_from_csvs()
+insert_financial_accounts_from_parquets()
 
-insert_financial_statements_from_csvs()
+insert_financial_statements_from_parquets()
 
-insert_price_history_from_csvs()
+insert_price_history_from_parquets()
 
-insert_descriptive_stats_from_csvs()
+insert_descriptive_stats_from_parquets()
 
 inserir_macro_values()
+
+PARQUETS_DIR = os.path.join(os.path.dirname(__file__), "parquets")
+
+if os.path.exists(PARQUETS_DIR) and os.path.isdir(PARQUETS_DIR):
+    shutil.rmtree(PARQUETS_DIR)
+    print(f"🗑️ Pasta removida: {PARQUETS_DIR}")
+else:
+    print(f"⚠️ Pasta não encontrada para remoção: {PARQUETS_DIR}")
+
+PARQUETS_DIR = os.path.join(os.path.dirname(__file__), "excels")
+
+# if os.path.exists(PARQUETS_DIR) and os.path.isdir(PARQUETS_DIR):
+#     shutil.rmtree(PARQUETS_DIR)
+#     print(f"🗑️ Pasta removida: {PARQUETS_DIR}")
+# else:
+#     print(f"⚠️ Pasta não encontrada para remoção: {PARQUETS_DIR}")

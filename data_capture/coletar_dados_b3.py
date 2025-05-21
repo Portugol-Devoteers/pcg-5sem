@@ -40,51 +40,51 @@ def export_company_data_to_files(ticker: str):
     stats = stats[["count", "mean", "median", "mode", "std", "min", "25%", "75%", "IQR", "max"]]
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_base = os.path.join(base_dir, "csvs")
-    excel_dir = os.path.join(base_dir, "excels")
-    os.makedirs(excel_dir, exist_ok=True)
+    parquet_base = os.path.join(base_dir, "parquets")
+    #excel_dir = os.path.join(base_dir, "excels")
+    #os.makedirs(excel_dir, exist_ok=True)
 
     subfolders = ["historical", "descriptive", "DRE", "balance", "cashflow"]
     for sub in subfolders:
-        os.makedirs(os.path.join(csv_base, sub), exist_ok=True)
+        os.makedirs(os.path.join(parquet_base, sub), exist_ok=True)
 
     safe_name = tck.replace(".", "_").replace("/", "_")
-    excel_file = os.path.join(excel_dir, f"{safe_name}_dados.xlsx")
-    csv_files = {
-        "historical": os.path.join(csv_base, "historical", f"{safe_name}_historical.csv"),
-        "descriptive": os.path.join(csv_base, "descriptive", f"{safe_name}_descriptive.csv"),
-        "DRE": os.path.join(csv_base, "DRE", f"{safe_name}_dre.csv"),
-        "balance": os.path.join(csv_base, "balance", f"{safe_name}_balanco.csv"),
-        "cashflow": os.path.join(csv_base, "cashflow", f"{safe_name}_fluxo_caixa.csv")
+    #excel_file = os.path.join(excel_dir, f"{safe_name}_dados.xlsx")
+    parquet_files = {
+        "historical": os.path.join(parquet_base, "historical", f"{safe_name}_historical.parquet"),
+        "descriptive": os.path.join(parquet_base, "descriptive", f"{safe_name}_descriptive.parquet"),
+        "DRE": os.path.join(parquet_base, "DRE", f"{safe_name}_dre.parquet"),
+        "balance": os.path.join(parquet_base, "balance", f"{safe_name}_balanco.parquet"),
+        "cashflow": os.path.join(parquet_base, "cashflow", f"{safe_name}_fluxo_caixa.parquet")
     }
 
-    with pd.ExcelWriter(excel_file, engine="xlsxwriter", datetime_format="yyyy-mm-dd") as writer:
-        historical_data.to_excel(writer, sheet_name="Historico")
-        stats.to_excel(writer,          sheet_name="Descritivas")
-        income_stmt.to_excel(writer,    sheet_name="DRE")
-        balance.to_excel(writer,        sheet_name="Balanco")
-        cashflow.to_excel(writer,       sheet_name="FluxoCaixa")
-        pd.DataFrame({
-            "Sheet": ["Historico", "DRE", "Balanco", "FluxoCaixa"],
-            "Units": ["Preço em BRL; Volume = nº de ações",
-                      "Valores em BRL", "Valores em BRL", "Valores em BRL"]
-        }).to_excel(writer, sheet_name="Unidades", index=False)
+    # with pd.ExcelWriter(excel_file, engine="xlsxwriter", datetime_format="yyyy-mm-dd") as writer:
+    #     historical_data.to_excel(writer, sheet_name="Historico")
+    #     stats.to_excel(writer,          sheet_name="Descritivas")
+    #     income_stmt.to_excel(writer,    sheet_name="DRE")
+    #     balance.to_excel(writer,        sheet_name="Balanco")
+    #     cashflow.to_excel(writer,       sheet_name="FluxoCaixa")
+    #     pd.DataFrame({
+    #         "Sheet": ["Historico", "DRE", "Balanco", "FluxoCaixa"],
+    #         "Units": ["Preço em BRL; Volume = nº de ações",
+    #                   "Valores em BRL", "Valores em BRL", "Valores em BRL"]
+    #     }).to_excel(writer, sheet_name="Unidades", index=False)
 
-    historical_data.to_csv(csv_files["historical"])
-    stats.to_csv(csv_files["descriptive"])
-    income_stmt.to_csv(csv_files["DRE"])
-    balance.to_csv(csv_files["balance"])
-    cashflow.to_csv(csv_files["cashflow"])
+    historical_data.to_parquet(parquet_files["historical"], index=True)
+    stats.to_parquet(parquet_files["descriptive"], index=True)
+    income_stmt.to_parquet(parquet_files["DRE"], index=True)
+    balance.to_parquet(parquet_files["balance"], index=True)
+    cashflow.to_parquet(parquet_files["cashflow"], index=True)
 
-    print(f"✅ Excel salvo em: {excel_file}")
-    print("📂 CSVs salvos em:")
-    for key, path in csv_files.items():
+    # print(f"✅ Excel salvo em: {excel_file}")
+    print("📂 Parquets salvos em:")
+    for key, path in parquet_files.items():
         print(f"   - {path}")
 
-    return {
-        "excel": excel_file,
-        **csv_files
-    }
+    # return {
+    #     "excel": excel_file,
+    #     **parquet_files
+    # }
 
 if __name__ == "__main__":
     export_company_data_to_files()

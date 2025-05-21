@@ -1,16 +1,15 @@
-
 import os
 import pandas as pd
 import psycopg
 import psycopg.errors  # Importa as exceções específicas do psycopg
 
-def insert_financial_accounts_from_csvs():
+def insert_financial_accounts_from_parquets():
     # Configurações fixas
     USER_ID = 1
     PATHS = {
-        "DRE":      ("csvs/dre",      1),
-        "Balance":  ("csvs/balance",  2),
-        "Cashflow": ("csvs/cashflow", 3)
+        "DRE":      ("parquets/DRE",      1),
+        "Balance":  ("parquets/balance",  2),
+        "Cashflow": ("parquets/cashflow", 3)
     }
 
     # Conexão com o banco
@@ -29,11 +28,11 @@ def insert_financial_accounts_from_csvs():
             continue
 
         for arquivo in os.listdir(pasta):
-            if not arquivo.endswith(".csv"):
+            if not arquivo.endswith(".parquet"):
                 continue
 
-            path_csv = os.path.join(pasta, arquivo)
-            df = pd.read_csv(path_csv, index_col=0)
+            path_parquet = os.path.join(pasta, arquivo)
+            df = pd.read_parquet(path_parquet)
 
             for conta in df.index:
                 conta_nome = str(conta).strip()
@@ -59,7 +58,7 @@ def insert_financial_accounts_from_csvs():
                 except psycopg.errors.UniqueViolation:
                     # Trata a violação de unicidade e continua
                     print(f"⚠️ Violação de unicidade: {conta_nome} já existe no banco de dados.")
-                    conn.rollback()  # Reverte a transação atual para evitar problemas
+                    conn.rollback()
                     continue
 
     conn.commit()
@@ -68,4 +67,4 @@ def insert_financial_accounts_from_csvs():
     print("\n🎉 Contas inseridas com sucesso!")
 
 if __name__ == "__main__":
-    insert_financial_accounts_from_csvs()
+    insert_financial_accounts_from_parquets()
