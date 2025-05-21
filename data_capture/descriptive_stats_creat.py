@@ -2,9 +2,9 @@ import os
 import pandas as pd
 import psycopg
 
-def insert_descriptive_stats_from_csvs():
+def insert_descriptive_stats_from_parquets():
     USER_ID = 1
-    DESCRIPTIVE_DIR = "csvs/descriptive"
+    DESCRIPTIVE_DIR = "parquets/descriptive"
 
     conn = psycopg.connect(
         dbname="tcc_b3",
@@ -20,13 +20,13 @@ def insert_descriptive_stats_from_csvs():
         return
 
     for arquivo in os.listdir(DESCRIPTIVE_DIR):
-        if not arquivo.endswith(".csv"):
+        if not arquivo.endswith(".parquet"):
             continue
 
-        path_csv = os.path.join(DESCRIPTIVE_DIR, arquivo)
+        path_parquet = os.path.join(DESCRIPTIVE_DIR, arquivo)
 
-        # Extrai PETR4.SA do padrão PETR4_SA_descriptive.csv
-        partes = arquivo.replace("_descriptive.csv", "").split("_")
+        # Extrai PETR4.SA do padrão PETR4_SA_descriptive.parquet
+        partes = arquivo.replace("_descriptive.parquet", "").split("_")
         if len(partes) < 2:
             print(f"⚠️ Nome de arquivo inesperado: {arquivo}")
             continue
@@ -40,8 +40,8 @@ def insert_descriptive_stats_from_csvs():
             continue
         company_id = row[0]
 
-        # Lê CSV
-        df = pd.read_csv(path_csv, index_col=0)
+        # Lê Parquet
+        df = pd.read_parquet(path_parquet)
         df.rename(columns={"25%": "p25", "75%": "p75", "IQR": "iqr"}, inplace=True)
 
         safe = lambda v: None if pd.isna(v) else float(v)
@@ -81,7 +81,7 @@ def insert_descriptive_stats_from_csvs():
                         iqr    = EXCLUDED.iqr,
                         max    = EXCLUDED.max,
                         updated_by_user_id = EXCLUDED.updated_by_user_id,
-                        updated_at = CURRENT_TIMESTAMP        -- se houver trigger, pode remover
+                        updated_at = CURRENT_TIMESTAMP
                     """,
                     (
                         company_id, history_id,
@@ -94,11 +94,10 @@ def insert_descriptive_stats_from_csvs():
                     )
                 )
             except Exception as e:
-                # desfaz somente a operação falha e segue para a próxima linha
                 conn.rollback()
                 print(f"  ⚠️ Erro ao inserir/atualizar '{indicator}' ({b3_code}): {e}")
                 continue
-        # o arquivo inteiro foi processado sem falhas impeditivas
+
         conn.commit()
         print(f"✅ {b3_code}: descritivas inseridas/atualizadas")
 
@@ -107,4 +106,4 @@ def insert_descriptive_stats_from_csvs():
     print("\n🎉 Processo concluído – duplicatas foram atualizadas e erros ignorados linha-a-linha.")
 
 if __name__ == "__main__":
-    insert_descriptive_stats_from_csvs()
+    insert_descriptive_stats_from_parquets()

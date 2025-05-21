@@ -2,9 +2,9 @@ import os
 import pandas as pd
 import psycopg
 
-def insert_price_history_from_csvs():
+def insert_price_history_from_parquets():
     USER_ID = 1
-    pasta = "csvs/historical"
+    pasta = "parquets/historical"
 
     conn = psycopg.connect(
         dbname="tcc_b3",
@@ -20,14 +20,14 @@ def insert_price_history_from_csvs():
         return
 
     for arquivo in os.listdir(pasta):
-        if not arquivo.endswith(".csv"):
+        if not arquivo.endswith(".parquet"):
             continue
 
-        path_csv = os.path.join(pasta, arquivo)
-        df = pd.read_csv(path_csv)
+        path_parquet = os.path.join(pasta, arquivo)
+        df = pd.read_parquet(path_parquet)
         df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
 
-        nome_arquivo = arquivo.replace("_historical.csv", "")
+        nome_arquivo = arquivo.replace("_historical.parquet", "")
         b3_code = nome_arquivo.replace("_", ".")
 
         try:
@@ -63,7 +63,7 @@ def insert_price_history_from_csvs():
                 ))
             except Exception as e:
                 print(f"❌ Erro ao inserir linha de {b3_code}: {e}")
-                conn.rollback()  # limpa a transação com erro
+                conn.rollback()
                 continue
 
         print(f"✅ Histórico importado: {b3_code}")
@@ -75,4 +75,4 @@ def insert_price_history_from_csvs():
     print("\n📊 Todos os históricos foram inseridos com sucesso.")
 
 if __name__ == "__main__":
-    insert_price_history_from_csvs()
+    insert_price_history_from_parquets()

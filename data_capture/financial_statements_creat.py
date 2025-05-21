@@ -2,12 +2,12 @@ import os
 import pandas as pd
 import psycopg
 
-def insert_financial_statements_from_csvs():
+def insert_financial_statements_from_parquets():
     USER_ID = 1
     PATHS = {                 # pasta → tipo de demonstrativo
-        "DRE":      "csvs/dre",
-        "Balance":  "csvs/balance",
-        "Cashflow": "csvs/cashflow",
+        "DRE":      "parquets/DRE",
+        "Balance":  "parquets/balance",
+        "Cashflow": "parquets/cashflow",
     }
     TYPE_IDS = {"DRE": 1, "Balance": 2, "Cashflow": 3}
 
@@ -26,10 +26,10 @@ def insert_financial_statements_from_csvs():
                 continue
 
             for arquivo in os.listdir(pasta):
-                if not arquivo.endswith(".csv"):
+                if not arquivo.endswith(".parquet"):
                     continue
 
-                # Ex.: AALR3_SA_dre.csv  →  AALR3.SA
+                # Ex.: AALR3_SA_dre.parquet  →  AALR3.SA
                 parte1, parte2, *_ = arquivo.split('_')
                 b3_code = f"{parte1}.{parte2}"
 
@@ -40,7 +40,7 @@ def insert_financial_statements_from_csvs():
                     continue
                 company_id = row[0]
 
-                df = pd.read_csv(os.path.join(pasta, arquivo))
+                df = pd.read_parquet(os.path.join(pasta, arquivo))
                 df.rename(columns={df.columns[0]: "account_name"}, inplace=True)
 
                 # transforma wide → long: conta | reference_date | value
@@ -77,20 +77,20 @@ def insert_financial_statements_from_csvs():
                             VALUES (%s, %s, %s, %s, %s)
                             ON CONFLICT (company_id, account_id, reference_date)
                             DO UPDATE SET
-                                value             = EXCLUDED.value,
+                                value              = EXCLUDED.value,
                                 updated_by_user_id = EXCLUDED.updated_by_user_id,
-                                updated_at        = CURRENT_TIMESTAMP;
+                                updated_at         = CURRENT_TIMESTAMP;
                             """,
                             (company_id, account_id, reference_date, value, USER_ID)
                         )
                     except Exception as e:
-                        conn.rollback()                      # descarta só a linha
+                        conn.rollback()  # descarta só a linha
                         print(f"  ❌ Erro em '{account_name}' {b3_code}: {e}")
 
-                conn.commit()                                # fecha o CSV
+                conn.commit()  # fecha o Parquet
                 print(f"✅ {b3_code}: demonstrativo {tipo_nome} inserido/atualizado")
 
-    print("\n🎉 Processo concluído – todos os CSVs percorridos.")
+    print("\n🎉 Processo concluído – todos os Parquets percorridos.")
 
 if __name__ == "__main__":
-    insert_financial_statements_from_csvs()
+    insert_financial_statements_from_parquets()

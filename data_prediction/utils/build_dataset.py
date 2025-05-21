@@ -1,7 +1,24 @@
 # data_prediction/utils/build_dataset.py
 from pathlib import Path
 import pandas as pd
-from connection import get_conn          # ← import local
+import psycopg
+import shutil  # ✅ adicionado para remover pastas
+
+def get_conn(
+    dbname="tcc_b3",
+    user="trainer",
+    password="postgresql",
+    host="localhost",
+    port="5432"
+):
+    return psycopg.connect(
+        dbname=dbname,
+        user=user,
+        password=password,
+        host=host,
+        port=port
+    )
+
 # ---------------------------------------------------------------- #
 BASE  = Path(__file__).resolve().parent.parent
 DATA  = BASE / "get_data" / "data"
@@ -96,3 +113,10 @@ if __name__ == "__main__":
             build_dataset(r[0])
 
     # build_dataset("Petrobras")
+
+    # ✅ Após terminar todos, remove a pasta "data"
+    if DATA.exists() and DATA.is_dir():
+        shutil.rmtree(DATA)
+        print(f"🗑️ Pasta removida: {DATA}")
+    else:
+        print(f"⚠️ Pasta não encontrada para remoção: {DATA}")
