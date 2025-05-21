@@ -98,21 +98,6 @@ export const CompanyDetails = ({ company }: Props) => {
                     <li>3º LSTM – R$ 123,00 – 2.50% erro</li>
                 </ul>
             </Card>
-
-            {/* Fundamentos da empresa (100% largura) */}
-            <Card className="p-4 col-span-2">
-                <strong className="block mb-2">
-                    📊 Indicadores Fundamentais
-                </strong>
-                <ul className="text-sm space-y-1">
-                    <li>Faturamento: R$ 210 bilhões</li>
-                    <li>Lucro líquido: R$ 42 bilhões</li>
-                    <li>ROE: 18%</li>
-                    <li>Dívida líquida: R$ 90 bilhões</li>
-                    <li>Patrimônio líquido: R$ 240 bilhões</li>
-                    <li>Margem líquida: 20%</li>
-                </ul>
-            </Card>
         </div>
     );
 };
