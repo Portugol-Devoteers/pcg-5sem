@@ -58,7 +58,7 @@ export default function B3Dashboard() {
     };
 
     return (
-        <div className="w-[1000px] h-[700px] overflow-hidden bg-white text-slate-900 rounded-2xl shadow-lg p-4 space-y-4">
+        <div className="w-[1000px] h-[700px] overflow-hidden bg-white text-slate-900 rounded-2xl shadow-lg p-4 space-y-4 dark:bg-slate-700 dark:text-slate-200">
             <Header
                 searchTerm={searchTerm}
                 suggestions={filteredSuggestions}
