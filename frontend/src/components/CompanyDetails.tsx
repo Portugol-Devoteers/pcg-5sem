@@ -16,7 +16,7 @@ export const CompanyDetails = ({ company }: Props) => {
             const fetchGraphData = async () => {
                 const [graphRes, _] = await Promise.all([
                     axios.get(
-                        `http://localhost:8080/prediction/${company.ticker}`
+                        `http://localhost:9000/prediction/${company.ticker}`
                     ),
                     axios.get(""),
                 ]);

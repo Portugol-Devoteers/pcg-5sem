@@ -21,8 +21,8 @@ export default function B3Dashboard() {
         const fetchData = async () => {
             try {
                 const [companyRes, sectorRes] = await Promise.all([
-                    axios.get<Company[]>("http://localhost:8080/companies"),
-                    axios.get<string[]>("http://localhost:8080/sectors"),
+                    axios.get<Company[]>("http://localhost:9000/companies"),
+                    axios.get<string[]>("http://localhost:9000/sectors"),
                 ]);
                 setCompanies(companyRes.data);
                 setSectors(sectorRes.data);
