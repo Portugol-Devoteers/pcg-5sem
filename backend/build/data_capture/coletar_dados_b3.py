@@ -21,6 +21,9 @@ def export_company_data_to_files(ticker: str):
     ticker_obj = yf.Ticker(tck)
 
     historical_data = strip_tz(ticker_obj.history(period="max", interval="1d"))
+
+    historical_data.columns = [c.lower() for c in historical_data.columns]
+
     income_stmt     = strip_tz(ticker_obj.financials.copy())
     balance         = strip_tz(ticker_obj.balance_sheet.copy())
     cashflow        = strip_tz(ticker_obj.cashflow.copy())

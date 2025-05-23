@@ -15,17 +15,17 @@ def run_build():
     # Passo 1: Criar tabelas
     run_create_table()
 
-    # Passo 2: Coletar dados
-    run_get_data()
+    # # Passo 2: Coletar dados
+    # run_get_data()
 
-    # Passo 3: Construir dataset
-    run_build_dataset()
+    # # Passo 3: Construir dataset
+    # run_build_dataset()
 
-    # Passo 4: Treinar modelos
-    run_models()
+    # # Passo 4: Treinar modelos
+    # run_models()
 
-    # Passo 5: Inserir previsões no banco de dados
-    run_insert_predictions()
+    # # Passo 5: Inserir previsões no banco de dados
+    # run_insert_predictions()
 
     print("✅ Processo de construção do banco de dados concluído.")
     end_time = time.time()

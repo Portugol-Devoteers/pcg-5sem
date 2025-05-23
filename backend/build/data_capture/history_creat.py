@@ -28,6 +28,14 @@ def insert_price_history_from_parquets():
 
         path_parquet = os.path.join(pasta, arquivo)
         df = pd.read_parquet(path_parquet)
+        # se a data estiver no índice, transforma em coluna
+        if isinstance(df.index, pd.DatetimeIndex):
+            df = df.reset_index().rename(columns={'index': 'date'})   # cria coluna date
+
+        # normaliza os nomes
+        df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
+
+
         df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
 
         nome_arquivo = arquivo.replace("_historical.parquet", "")

@@ -20,7 +20,7 @@ def run_create_table():
     )
 
     with conn.cursor() as cur:
-        cur.execute("SELECT b3_code FROM companies")
+        cur.execute("SELECT b3_code FROM companies LIMIT 1")
         tickers = [row[0] for row in cur.fetchall()]
 
     # Total de tickers
@@ -51,14 +51,6 @@ def run_create_table():
         print(f"🗑️ Pasta removida: {PARQUETS_DIR}")
     else:
         print(f"⚠️ Pasta não encontrada para remoção: {PARQUETS_DIR}")
-
-    # PARQUETS_DIR = os.path.join(os.path.dirname(__file__), "excels")
-
-    # if os.path.exists(PARQUETS_DIR) and os.path.isdir(PARQUETS_DIR):
-    #     shutil.rmtree(PARQUETS_DIR)
-    #     print(f"🗑️ Pasta removida: {PARQUETS_DIR}")
-    # else:
-    #     print(f"⚠️ Pasta não encontrada para remoção: {PARQUETS_DIR}")
 
 if __name__ == "__main__":
     run_create_table()

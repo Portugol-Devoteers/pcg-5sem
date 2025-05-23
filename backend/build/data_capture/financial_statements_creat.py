@@ -45,7 +45,11 @@ def insert_financial_statements_from_parquets():
                     continue
                 company_id = row[0]
 
-                df = pd.read_parquet(os.path.join(pasta, arquivo))
+                df = (
+                    pd.read_parquet(os.path.join(pasta, arquivo))
+                    .reset_index()                       # traz o índice para colunas
+                    .rename(columns={'index': 'account_name'})  # garante o nome correto
+                )
                 df.rename(columns={df.columns[0]: "account_name"}, inplace=True)
 
                 # transforma wide → long: conta | reference_date | value
