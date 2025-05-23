@@ -330,6 +330,24 @@ def data_to_json(data):
 # ----------------------------------------------------------------------
 if __name__ == "__main__":
     resultado = comparar_dados_empresa("PETR4.SA")
-    for k, v in resultado.items():
-        print(f"\n--- {k} ---")
-        print(v.head())
+
+import pandas as pd
+import json
+
+def jsons_to_excel(json_dict, output_file="comparacao_resultados.xlsx"):
+    """
+    Converte dicionário de listas (output de data.to_dict) em múltiplas abas de um Excel.
+
+    :param json_dict: dict {nome: lista_de_dicts}
+    :param output_file: nome do arquivo de saída
+    """
+    with pd.ExcelWriter(output_file) as writer:
+        for nome, json_data in json_dict.items():
+            # Converte lista de dicts para DataFrame
+            df = pd.DataFrame(json_data)
+            # Salva como uma aba no Excel
+            df.to_excel(writer, sheet_name=nome[:31], index=False)  # Excel limita sheet a 31 chars
+
+    print(f"Arquivo Excel salvo como: {output_file}")
+
+jsons_to_excel(resultado, output_file="resultado_empresa_1.xlsx")
