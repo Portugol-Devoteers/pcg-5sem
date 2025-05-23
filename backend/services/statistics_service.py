@@ -61,6 +61,17 @@ def gerar_estatisticas_gerais():
         
         winners = pd.DataFrame(cur.fetchall(),
                                columns=["date","b3_code_id","model","y_pred","y_true"])
+        
+
+        # 1. Carrega price_history (só 3 colunas bastam) (para calcular o hit)
+        cur.execute("""
+            SELECT company_id      AS b3_code_id,
+                date,
+                close
+            FROM price_history
+            ORDER BY b3_code_id, date
+        """)
+        ph = pd.DataFrame(cur.fetchall(), columns=["b3_code_id", "date", "close"])
 
     # Garantir que não há NaN e tipo numérico
     winners = winners.dropna(subset=["y_true", "y_pred"]).copy()
@@ -71,8 +82,26 @@ def gerar_estatisticas_gerais():
     winners["abs_err"] = np.abs(winners["y_true"] - winners["y_pred"])
     winners["pct_err"] = winners["abs_err"] / winners["y_true"] * 100
 
+#------------------------------------------------------------------------------------------------
     # Cálculo do hit: direção correta?
-    winners["hit"] = np.sign(winners["y_true"].diff()) == np.sign(winners["y_pred"].diff())
+    # 2. Calcula o close do dia imediatamente anterior
+    ph["prev_close"] = ph.groupby("b3_code_id")["close"].shift(1)
+
+    # 3. Mantém só (código, data, prev_close) e faz o merge
+    prev = ph[["b3_code_id", "date", "prev_close"]]
+    winners = winners.merge(prev, on=["b3_code_id", "date"], how="left")
+    winners = winners.dropna(subset=["prev_close"])
+
+    # converte prev_close de Decimal → float
+    winners["prev_close"] = winners["prev_close"].astype(float)
+
+    # Cálculo do hit com base no prev_close
+    winners["hit"] = (
+        np.sign(winners["y_true"] - winners["prev_close"]) ==
+        np.sign(winners["y_pred"] - winners["prev_close"])
+    )
+
+#------------------------------------------------------------------------------------------------
 
     # Métricas
     mae = winners["abs_err"].mean()
@@ -90,7 +119,7 @@ def gerar_estatisticas_gerais():
         "n_observacoes": len(winners)
     }
 
-    return stats, winners
+    return stats#, winners
 
 # ---------------------------
 # Execução simples
@@ -102,5 +131,5 @@ if __name__ == "__main__":
     for k, v in stats.items():
         print(f"{k}: {v}")
 
-    print("\nAmostra de vencedores:")
-    print(winners_df)
+    # print("\nAmostra de vencedores:")
+    # print(winners_df.head())
