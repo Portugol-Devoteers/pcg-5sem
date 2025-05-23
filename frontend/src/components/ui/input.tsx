@@ -16,7 +16,7 @@ export const Input = ({
     return (
         <input
             placeholder={placeholder}
-            className={`w-full rounded-xl px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${className}`}
+            className={`w-full text-black dark:text-white placeholder:text-black placeholder:dark:text-white rounded-xl px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${className}`}
             value={value}
             onChange={(e) => {
                 if (onChange) {
