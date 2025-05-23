@@ -22,8 +22,6 @@ def get_companies_from_db():
                 "ticker": row[0],
                 "name": row[1],
                 "sector": row[2],
-                "price": 123.20,
-                "variation": -0.5,
             }
             for row in rows
         ]

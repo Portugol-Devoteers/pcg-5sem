@@ -3,7 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from services.companies_service import get_companies_from_db
 from services.sectors_service import get_sectors_from_db
 from services.prediction_service import get_prediction_from_db
-from services.comparation_service import comparar_dados_empresa
+from services.comparison_service import comparar_dados_empresa
+from services.statistics_service import gerar_estatisticas_gerais
+from services.statistics_service_sector import gerar_estatisticas_por_setor
+
 
 app = FastAPI()
 
@@ -31,6 +34,14 @@ def get_sectors():
 def get_prediction(ticker: str):
     return get_prediction_from_db(ticker)
 
-@app.get("/comparation/{ticker}")
-def get_comparation(ticker: str):
+@app.get("/comparison/{ticker}")
+def get_comparison(ticker: str):
     return comparar_dados_empresa(ticker)
+
+@app.get("/statistics")
+def get_statistics():
+    return gerar_estatisticas_gerais()
+
+@app.get("/statistics/{sector_id}")
+def get_statistics_by_sector(sector_id: int):
+    return gerar_estatisticas_por_setor(sector_id)

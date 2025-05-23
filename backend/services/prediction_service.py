@@ -13,7 +13,8 @@ def get_prediction_from_db(ticker: str):
                 p.model_id,
                 p.value,
                 m.model,
-                ph.close AS real
+                ph.close AS real,
+                p.updated_at
             FROM 
                 predictions p
             LEFT JOIN 
@@ -36,7 +37,7 @@ def get_prediction_from_db(ticker: str):
         model_name = row[3].lower()
         valor_previsto = float(row[2])
         valor_real = row[4]
-
+        updated_at = row[5]
         if valor_real is not None:
             grouped[data_formatada]["real"] = float(valor_real)
             
@@ -48,4 +49,21 @@ def get_prediction_from_db(ticker: str):
     valores = list(grouped.values())
     inicio_real = next((i for i, item in enumerate(valores) if "real" in item), 0)
 
-    return valores[inicio_real:]
+    # ­­­­­­­­­­­­­­­­­­­­­­­­­  dados que vão para o gráfico
+    graph_data = valores[inicio_real:]
+
+    # primeiro e último preço real
+    first_real = graph_data[0]["real"]
+    last_real  = next(item["real"] for item in reversed(graph_data) if "real" in item)
+
+    # date formatado
+    updated_at = updated_at.strftime("%d/%m/%Y") if updated_at else None
+
+    response = {
+        "graph":     graph_data,
+        "price":     last_real,                                   
+        "variation": (last_real - first_real) / first_real * 100,
+        "updated_at": updated_at,
+    }
+
+    return response

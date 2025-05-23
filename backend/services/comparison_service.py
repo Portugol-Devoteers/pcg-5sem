@@ -1,4 +1,4 @@
-# comparation_service.py
+# comparison_service.py
 import psycopg
 import pandas as pd
 
@@ -107,13 +107,13 @@ def load_company_predictions(conn, company_id):
 
 
 def calcular_metricas(df):
-    """Adiciona comparison %, error %, ordena date/model."""
-    df["comparison %"] = (
+    """Adiciona comparison_percent, error_percent, ordena date/model."""
+    df["comparison_percent"] = (
         100 - (df["value"].sub(df["price_history_value"]).abs()
                / df["price_history_value"] * 100)
     ).round(3)
 
-    df["error %"] = (
+    df["error_percent"] = (
         df["value"].sub(df["price_history_value"]).abs()
         / df["price_history_value"] * 100
     ).round(3)
@@ -134,13 +134,13 @@ def gerar_resumos_empresa(conn, company_id):
 
     # melhor modelo por dia
     vencedores = df.loc[
-        df.groupby("date")["error %"].idxmin(),
-        ["date", "model_name", "error %"],
+        df.groupby("date")["error_percent"].idxmin(),
+        ["date", "model_name", "error_percent"],
     ].reset_index(drop=True)
 
     # curto / longo
-    curto = df[df["date"] == df["date"].min()].sort_values("error %")
-    longo = df[df["date"] == df["date"].max()].sort_values("error %")
+    curto = df[df["date"] == df["date"].min()].sort_values("error_percent")
+    longo = df[df["date"] == df["date"].max()].sort_values("error_percent")
 
     return df, vencedores, curto, longo
 
@@ -233,9 +233,9 @@ def calcular_acuracias(df):
         dn_acc = round(dn_ok / tot_dn * 100, 2) if tot_dn else None
         return pd.Series(
             {
-                "up_accuracy_%": up_acc,
-                "down_accuracy_%": dn_acc,
-                "geral_accuracy_%": geral,
+                "up_accuracy_percent": up_acc,
+                "down_accuracy_percent": dn_acc,
+                "geral_accuracy_percent": geral,
             }
         )
 
@@ -248,16 +248,16 @@ def anexar_acuracias(df_base, acc_model, acc_date):
     """Adiciona colunas de acurácia do modelo e da data."""
     acc_model = acc_model.rename(
         columns={
-            "up_accuracy_%": "up_accuracy_%_model",
-            "down_accuracy_%": "down_accuracy_%_model",
-            "geral_accuracy_%": "geral_accuracy_%_model",
+            "up_accuracy_percent": "up_accuracy_percent_model",
+            "down_accuracy_percent": "down_accuracy_percent_model",
+            "geral_accuracy_percent": "geral_accuracy_percent_model",
         }
     )
     acc_date = acc_date.rename(
         columns={
-            "up_accuracy_%": "up_accuracy_%_date",
-            "down_accuracy_%": "down_accuracy_%_date",
-            "geral_accuracy_%": "geral_accuracy_%_date",
+            "up_accuracy_percent": "up_accuracy_percent_date",
+            "down_accuracy_percent": "down_accuracy_percent_date",
+            "geral_accuracy_percent": "geral_accuracy_percent_date",
         }
     )
     df_out = df_base.merge(acc_model, on="model_name", how="left")
@@ -312,12 +312,11 @@ def comparar_dados_empresa(ticker: str):
     longo_full = anexar_acuracias(longo_emp, acc_model, acc_date)
 
 
-
     return {
-        "df_completo": data_to_json(df_emp_full),
-        "vencedores": data_to_json(vencedores_full),
-        "curto_prazo_completo": data_to_json(curto_full),
-        "longo_prazo_completo": data_to_json(longo_full),
+        # "vencedores": data_to_json(vencedores_full),
+        "short_term": data_to_json(curto_full),
+        "long_term": data_to_json(longo_full),
+        "company_name": curto_full["company_name"].iloc[0],
     }
 
 def data_to_json(data):
@@ -350,4 +349,4 @@ def jsons_to_excel(json_dict, output_file="comparacao_resultados.xlsx"):
 
     print(f"Arquivo Excel salvo como: {output_file}")
 
-jsons_to_excel(resultado, output_file="resultado_empresa_1.xlsx")
+# jsons_to_excel(resultado, output_file="resultado_empresa_1.xlsx")
