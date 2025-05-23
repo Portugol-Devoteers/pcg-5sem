@@ -32,7 +32,10 @@ def run_create_table():
             print(f"\n🔄 Processando {ticker} ({i}/{total_tickers})...")
             export_company_data_to_files(ticker)
         except Exception as e:
-            print(f"❌ Erro ao processar {ticker} ({i}/{total_tickers}): {e}")
+            erro_msg = f"❌ Erro ao processar {ticker} ({i}/{total_tickers}): {e}\n"
+            print(erro_msg)
+            with open('erros_export.txt', 'a', encoding='utf-8') as f:
+                f.write(erro_msg)
 
     insert_financial_accounts_from_parquets()
 

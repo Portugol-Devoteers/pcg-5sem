@@ -3,6 +3,9 @@ from pathlib import Path
 import pandas as pd
 import psycopg
 
+def log_erro(msg):
+    with open('erros_importacao.txt', 'a', encoding='utf-8') as f:
+        f.write(msg + '\n')
 
 def insert_price_history_from_parquets():
     USER_ID = 1
@@ -19,7 +22,9 @@ def insert_price_history_from_parquets():
     cur = conn.cursor()
 
     if not os.path.isdir(pasta):
-        print(f"📁 Pasta não encontrada: {pasta}")
+        msg = f"📁 Pasta não encontrada: {pasta}"
+        print(msg)
+        log_erro(msg)
         return
 
     for arquivo in os.listdir(pasta):
@@ -28,13 +33,9 @@ def insert_price_history_from_parquets():
 
         path_parquet = os.path.join(pasta, arquivo)
         df = pd.read_parquet(path_parquet)
-        # se a data estiver no índice, transforma em coluna
+
         if isinstance(df.index, pd.DatetimeIndex):
-            df = df.reset_index().rename(columns={'index': 'date'})   # cria coluna date
-
-        # normaliza os nomes
-        df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
-
+            df = df.reset_index().rename(columns={'index': 'date'})
 
         df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
 
@@ -45,11 +46,15 @@ def insert_price_history_from_parquets():
             cur.execute("SELECT id FROM companies WHERE b3_code = %s", (b3_code,))
             result = cur.fetchone()
             if not result:
-                print(f"⚠️ Empresa não encontrada para o código: {b3_code}")
+                msg = f"⚠️ Empresa não encontrada para o código: {b3_code}"
+                print(msg)
+                log_erro(msg)
                 continue
             company_id = result[0]
         except Exception as e:
-            print(f"❌ Erro ao buscar empresa {b3_code}: {e}")
+            msg = f"❌ Erro ao buscar empresa {b3_code}: {e}"
+            print(msg)
+            log_erro(msg)
             conn.rollback()
             continue
 
@@ -72,18 +77,31 @@ def insert_price_history_from_parquets():
                     row.get("stock_splits", 0),
                     USER_ID
                 ))
+
             except Exception as e:
-                print(f"❌ Erro ao inserir linha de {b3_code}: {e}")
-                conn.rollback()
+                erro_msg = str(e)
+                if 'unique_price_entry' in erro_msg:
+                    msg = f"ℹ️ Aviso: Linha já existente para {b3_code}, ignorando."
+                    print(msg)
+                    conn.rollback()
+                    # Não grava no log
+                else:
+                    msg = f"❌ Erro ao inserir linha de {b3_code}: {e}"
+                    print(msg)
+                    log_erro(msg)
+                    conn.rollback()
                 continue
 
-        print(f"✅ Histórico importado: {b3_code}")
+
+        msg = f"✅ Histórico importado: {b3_code}"
+        print(msg)
 
     conn.commit()
     cur.close()
     conn.close()
 
-    print("\n📊 Todos os históricos foram inseridos com sucesso.")
+    msg = "\n📊 Todos os históricos foram inseridos com sucesso."
+    print(msg)
 
 if __name__ == "__main__":
     insert_price_history_from_parquets()

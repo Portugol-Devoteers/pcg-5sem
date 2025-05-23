@@ -119,7 +119,7 @@ def gerar_estatisticas_gerais():
         "n_observacoes": len(winners)
     }
 
-    return stats#, winners
+    return stats, winners
 
 # ---------------------------
 # Execução simples
