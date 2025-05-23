@@ -120,7 +120,7 @@ def gerar_estatisticas_por_setor(sector_id: int):
         "Hit_rate_%": round(hitp, 2),
         "n_observacoes": len(winners)
     }
-    return stats #, winners
+    return stats, winners
 
 if __name__ == "__main__":
     setor = 7         # exemplo
