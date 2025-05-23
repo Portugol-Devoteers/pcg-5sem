@@ -268,13 +268,22 @@ def anexar_acuracias(df_base, acc_model, acc_date):
 # ----------------------------------------------------------------------
 # 5) Função principal de serviço ---------------------------------------
 # ----------------------------------------------------------------------
-def comparar_dados_empresa(company_id: int):
+def comparar_dados_empresa(ticker: str):
     """
     Pipeline completo:
       • dados da empresa (df, vencedores, curto, longo)
       • dataset geral -> acurácias
       • consolida tudo num dicionário de DataFrames
     """
+
+    with get_connection() as conn:
+        # ----- busca id da empresa
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM companies WHERE b3_code = %s", (ticker,)
+            )
+            company_id = (cur.fetchone() or [None])[0]
+
     with get_connection() as conn:
         # ----- empresa específica
         df_emp, vencedores_emp, curto_emp, longo_emp = gerar_resumos_empresa(
@@ -302,19 +311,25 @@ def comparar_dados_empresa(company_id: int):
     curto_full = anexar_acuracias(curto_emp, acc_model, acc_date)
     longo_full = anexar_acuracias(longo_emp, acc_model, acc_date)
 
+
+
     return {
-        "df_completo": df_emp_full,
-        "vencedores": vencedores_full,
-        "curto_prazo_completo": curto_full,
-        "longo_prazo_completo": longo_full,
+        "df_completo": data_to_json(df_emp_full),
+        "vencedores": data_to_json(vencedores_full),
+        "curto_prazo_completo": data_to_json(curto_full),
+        "longo_prazo_completo": data_to_json(longo_full),
     }
 
-
+def data_to_json(data):
+    """
+    Converte um DataFrame em um dicionário JSON.
+    """
+    return data.to_dict(orient="records")
 # ----------------------------------------------------------------------
 # Execução simples -----------------------------------------------------
 # ----------------------------------------------------------------------
 if __name__ == "__main__":
-    resultado = comparar_dados_empresa(1)
+    resultado = comparar_dados_empresa("PETR4.SA")
     for k, v in resultado.items():
         print(f"\n--- {k} ---")
         print(v.head())
