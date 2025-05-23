@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from services.companies_service import get_companies_from_db
 from services.sectors_service import get_sectors_from_db
 from services.prediction_service import get_prediction_from_db
-
+from services.comparation_service import comparar_dados_empresa
 
 app = FastAPI()
 
@@ -30,3 +30,7 @@ def get_sectors():
 @app.get("/prediction/{ticker}")
 def get_prediction(ticker: str):
     return get_prediction_from_db(ticker)
+
+@app.get("/comparation/{ticker}")
+def get_comparation(ticker: str):
+    return comparar_dados_empresa(ticker)
