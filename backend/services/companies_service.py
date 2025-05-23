@@ -10,7 +10,8 @@ def get_companies_from_db():
             SELECT 
                 c.b3_code ticker, 
                 c.name,
-                s.name sector       
+                s.name sector,
+                c.sector_id       
             FROM 
                 companies c
             JOIN 
@@ -22,6 +23,7 @@ def get_companies_from_db():
                 "ticker": row[0],
                 "name": row[1],
                 "sector": row[2],
+                "sector_id": row[3]
             }
             for row in rows
         ]

@@ -2,10 +2,9 @@ import psycopg
 import pandas as pd
 import numpy as np
 from sklearn.metrics import r2_score
+import json
 
-# ---------------------------
-# Conexão
-# ---------------------------
+# --------------------------- conexao ---------------------------
 def get_conn():
     return psycopg.connect(
         dbname="tcc_b3",
@@ -15,9 +14,7 @@ def get_conn():
         port="5432"
     )
 
-# ---------------------------
-# Helpers
-# ---------------------------
+# --------------------------- métricas auxiliares ----------------
 def smape(y_true, y_pred):
     denom = (np.abs(y_true) + np.abs(y_pred)) / 2
     return np.mean(np.abs(y_pred - y_true) / denom) * 100
@@ -25,21 +22,28 @@ def smape(y_true, y_pred):
 def hit_rate(df):
     return df["hit"].mean() * 100
 
-# ---------------------------
-# Função principal
-# ---------------------------
-# ------------------------------------------------------------------
-# Estatísticas filtradas por setor
-# ------------------------------------------------------------------
-def gerar_estatisticas_por_setor(sector_id: int):
+
+def to_py(obj):
+    "Converte np.* para int/float padrão."
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    if isinstance(obj, (np.floating,)):
+        return float(obj)
+    if isinstance(obj, (np.ndarray,)):
+        return obj.tolist()
+    return obj
+
+# --------------------------- principal --------------------------
+def gerar_estatisticas_por_setor(sector_id: int) -> dict:
     """
-    Calcula métricas (MAE, RMSE, SMAPE, R2, Hit-rate) considerando
-    apenas empresas cujo companies.sector_id = sector_id.
+    Calcula MAE, RMSE, SMAPE, R² e Hit-rate
+    só para empresas cujo companies.sector_id = sector_id.
+    Retorna um dicionário JSON-serializável.
     """
     with get_conn() as conn, conn.cursor() as cur:
-
-        # 1) “vencedor” por dia/papel *dentro do setor*
-        cur.execute("""
+        # 1) vencedor do dia/papel (dentro do setor)
+        cur.execute(
+            """
             WITH ranked AS (
               SELECT p.*,
                      m.model,
@@ -54,7 +58,7 @@ def gerar_estatisticas_por_setor(sector_id: int):
               JOIN price_history    ph ON ph.company_id = p.b3_code_id
                                        AND ph.date      = p.date
               WHERE hc.column_name ILIKE 'close'
-                AND c.sector_id     = %s               -- <-- filtro
+                AND c.sector_id     = %s
             )
             SELECT r.date,
                    r.b3_code_id,
@@ -66,27 +70,30 @@ def gerar_estatisticas_por_setor(sector_id: int):
               ON ph.company_id = r.b3_code_id
              AND ph.date       = r.date
             WHERE r.rk = 1;
-        """, (sector_id,))
-
+            """,
+            (sector_id,),
+        )
         winners = pd.DataFrame(
             cur.fetchall(),
             columns=["date", "b3_code_id", "model", "y_pred", "y_true"]
         )
 
-        # 2) price_history só das empresas do setor
-        cur.execute("""
-            SELECT company_id      AS b3_code_id,
+        # 2) preço de fechamento anterior
+        cur.execute(
+            """
+            SELECT company_id AS b3_code_id,
                    date,
                    close
-            FROM price_history    ph
-            JOIN companies        c  ON c.id = ph.company_id
+            FROM price_history ph
+            JOIN companies     c ON c.id = ph.company_id
             WHERE c.sector_id = %s
-            ORDER BY b3_code_id, date
-        """, (sector_id,))
-        ph = pd.DataFrame(cur.fetchall(),
-                          columns=["b3_code_id", "date", "close"])
+            ORDER BY b3_code_id, date;
+            """,
+            (sector_id,),
+        )
+        ph = pd.DataFrame(cur.fetchall(), columns=["b3_code_id", "date", "close"])
 
-    # ---------- mesma rotina de pós-processamento ------------------
+    # -------------------- pós-processamento -----------------------
     winners = winners.dropna(subset=["y_true", "y_pred"]).copy()
     winners[["y_true", "y_pred"]] = winners[["y_true", "y_pred"]].astype(float)
 
@@ -102,8 +109,8 @@ def gerar_estatisticas_por_setor(sector_id: int):
     winners["prev_close"] = winners["prev_close"].astype(float)
 
     winners["hit"] = (
-        np.sign(winners["y_true"] - winners["prev_close"]) ==
-        np.sign(winners["y_pred"] - winners["prev_close"])
+        np.sign(winners["y_true"] - winners["prev_close"])
+        == np.sign(winners["y_pred"] - winners["prev_close"])
     )
 
     mae  = winners["abs_err"].mean()
@@ -113,14 +120,22 @@ def gerar_estatisticas_por_setor(sector_id: int):
     hitp = hit_rate(winners)
 
     stats = {
-        "MAE": round(mae, 4),
-        "RMSE": round(rmse, 4),
-        "SMAPE_%": round(smp, 3),
-        "R2": round(r2, 4),
-        "Hit_rate_%": round(hitp, 2),
-        "n_observacoes": len(winners)
+        "MAE":       float(round(mae, 4)),
+        "RMSE":      float(round(rmse, 4)),
+        "SMAPE_%":   float(round(smp, 3)),
+        "R2":        float(round(r2, 4)),
+        "Hit_rate_%":float(round(hitp, 2)),
+        "n_obs":     int(len(winners)),
     }
-    return stats, winners
+
+    winners_json = (
+        winners
+        .applymap(to_py)          # tira np.float64 / np.int64
+        .assign(date=lambda df: df["date"].astype(str))
+        .to_dict(orient="records")
+    )
+
+    return {"stats": stats, "winners": winners_json}
 
 if __name__ == "__main__":
     setor = 7         # exemplo

@@ -1,5 +1,7 @@
 from fastapi import FastAPI
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from services.companies_service import get_companies_from_db
 from services.sectors_service import get_sectors_from_db
 from services.prediction_service import get_prediction_from_db
@@ -38,10 +40,10 @@ def get_prediction(ticker: str):
 def get_comparison(ticker: str):
     return comparar_dados_empresa(ticker)
 
-@app.get("/statistics")
-def get_statistics():
-    return gerar_estatisticas_gerais()
-
 @app.get("/statistics/{sector_id}")
 def get_statistics_by_sector(sector_id: int):
-    return gerar_estatisticas_por_setor(sector_id)
+    payload = {
+        "general": gerar_estatisticas_gerais(),
+        "sector":  gerar_estatisticas_por_setor(sector_id)
+    }
+    return JSONResponse(content=jsonable_encoder(payload))

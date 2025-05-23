@@ -5,6 +5,7 @@ import { LineGraph } from "./LineGraph";
 import axios from "axios";
 import { Comparison } from "../types/Comparison";
 import { GraphData } from "../types/GraphData";
+import { Statistics } from "../types/Statistics";
 
 interface Props {
     company: Company | null;
@@ -17,19 +18,26 @@ export const CompanyDetails = ({ company }: Props) => {
         null
     );
 
+    const [statistics, setStatistics] = useState<Statistics | null>(null);
+
     useEffect(() => {
         if (company) {
             const fetchGraphData = async () => {
-                const [graphRes, comparisonRes] = await Promise.all([
-                    axios.get(
-                        `http://localhost:9000/prediction/${company.ticker}`
-                    ),
-                    axios.get<Comparison>(
-                        `http://localhost:9000/comparison/${company.ticker}`
-                    ),
-                ]);
+                const [graphRes, comparisonRes, statisticsRes] =
+                    await Promise.all([
+                        axios.get(
+                            `http://localhost:9000/prediction/${company.ticker}`
+                        ),
+                        axios.get<Comparison>(
+                            `http://localhost:9000/comparison/${company.ticker}`
+                        ),
+                        axios.get<Statistics>(
+                            `http://localhost:9000/statistics/${company.sector_id}`
+                        ),
+                    ]);
                 setGraphData(graphRes.data);
                 setComparisonData(comparisonRes.data);
+                setStatistics(statisticsRes.data);
             };
             fetchGraphData();
         }
@@ -146,6 +154,10 @@ export const CompanyDetails = ({ company }: Props) => {
                     ))}
                 </ul>
             </Card>
+
+            {/* Estatísticas do Setor */}
+
+            {/* Estatísticas Gerais */}
         </div>
     );
 };
