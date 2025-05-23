@@ -20,7 +20,7 @@ def run_create_table():
     )
 
     with conn.cursor() as cur:
-        cur.execute("SELECT b3_code FROM companies LIMIT 1")
+        cur.execute("SELECT b3_code FROM companies")
         tickers = [row[0] for row in cur.fetchall()]
 
     # Total de tickers
