@@ -6,6 +6,8 @@ import axios from "axios";
 import { Comparison } from "../types/Comparison";
 import { GraphData } from "../types/GraphData";
 import { Statistics } from "../types/Statistics";
+import { STATISTICS_NAME } from "../types/Statistics";
+import Loader from "./ui/loader";
 
 interface Props {
     company: Company | null;
@@ -22,24 +24,35 @@ export const CompanyDetails = ({ company }: Props) => {
 
     useEffect(() => {
         if (company) {
+            setGraphData(null);
+            setComparisonData(null);
+            setStatistics(null);
             const fetchGraphData = async () => {
-                const [graphRes, comparisonRes, statisticsRes] =
-                    await Promise.all([
-                        axios.get(
-                            `http://localhost:9000/prediction/${company.ticker}`
-                        ),
-                        axios.get<Comparison>(
-                            `http://localhost:9000/comparison/${company.ticker}`
-                        ),
-                        axios.get<Statistics>(
-                            `http://localhost:9000/statistics/${company.sector_id}`
-                        ),
-                    ]);
+                const [graphRes] = await Promise.all([
+                    axios.get(
+                        `http://localhost:9000/prediction/${company.ticker}`
+                    ),
+                ]);
                 setGraphData(graphRes.data);
-                setComparisonData(comparisonRes.data);
-                setStatistics(statisticsRes.data);
             };
+            const fetchStatistics = async () => {
+                // const statisticsRes = await axios.get<Statistics>(
+                //     `http://localhost:9000/statistics/${company.sector_id}`
+                // );
+                const [statisticsRes, comparisonRes] = await Promise.all([
+                    axios.get<Statistics>(
+                        `http://localhost:9000/statistics/${company.sector_id}`
+                    ),
+                    axios.get<Comparison>(
+                        `http://localhost:9000/comparison/${company.ticker}`
+                    ),
+                ]);
+                setStatistics(statisticsRes.data);
+                setComparisonData(comparisonRes.data);
+            };
+
             fetchGraphData();
+            fetchStatistics();
         }
     }, [company]);
 
@@ -51,11 +64,7 @@ export const CompanyDetails = ({ company }: Props) => {
         );
     }
 
-    if (
-        !graphData ||
-        !comparisonData ||
-        comparisonData.company_name !== company.name
-    ) {
+    if (!graphData) {
         return (
             <div className="flex items-center justify-center h-full text-sm text-muted">
                 Carregando dados...
@@ -110,8 +119,8 @@ export const CompanyDetails = ({ company }: Props) => {
             {/* Comparação de modelos - Curto prazo */}
             <Card className="p-4">
                 <strong className="block mb-2">📈 Curto Prazo (1 dia)</strong>
-                <ul className="text-sm space-y-1">
-                    <li>
+                {comparisonData ? (
+                    <ul className="text-sm space-y-1">
                         {comparisonData.short_term.length > 0 && (
                             <li>
                                 Real – R${" "}
@@ -120,22 +129,24 @@ export const CompanyDetails = ({ company }: Props) => {
                                 )}
                             </li>
                         )}
-                    </li>
-                    {comparisonData.short_term.map((model, index) => (
-                        <li key={index}>
-                            {index + 1}º {model.model_name.toUpperCase()} – R${" "}
-                            {model.value.toFixed(2)} –{" "}
-                            {model.error_percent.toFixed(2)}% erro
-                        </li>
-                    ))}
-                </ul>
+                        {comparisonData.short_term.map((model, index) => (
+                            <li key={index}>
+                                {index + 1}º {model.model_name.toUpperCase()} –
+                                R$ {model.value.toFixed(2)} –{" "}
+                                {model.error_percent.toFixed(2)}% erro
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <Loader size="sm" />
+                )}
             </Card>
 
             {/* Comparação de modelos - Longo prazo */}
             <Card className="p-4">
                 <strong className="block mb-2">📉 Longo Prazo (7 dias)</strong>
-                <ul className="text-sm space-y-1">
-                    <li>
+                {comparisonData ? (
+                    <ul className="text-sm space-y-1">
                         {comparisonData.long_term.length > 0 && (
                             <li>
                                 Real – R${" "}
@@ -144,23 +155,56 @@ export const CompanyDetails = ({ company }: Props) => {
                                 )}
                             </li>
                         )}
-                    </li>
-                    {comparisonData.long_term.map((model, index) => (
-                        <li key={index}>
-                            {index + 1}º {model.model_name.toUpperCase()} – R${" "}
-                            {model.value.toFixed(2)} –{" "}
-                            {model.error_percent.toFixed(2)}% erro
-                        </li>
-                    ))}
-                </ul>
+                        {comparisonData.long_term.map((model, index) => (
+                            <li key={index}>
+                                {index + 1}º {model.model_name.toUpperCase()} –
+                                R$ {model.value.toFixed(2)} –{" "}
+                                {model.error_percent.toFixed(2)}% erro
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <Loader size="sm" />
+                )}
             </Card>
 
             {/* Estatísticas do Setor */}
+            <Card className="p-4 col-span-2">
+                <strong className="block mb-2">
+                    📊 Estatísticas do Setor{" "}
+                    {statistics && `(${statistics.sector.sector_name})`}
+                </strong>
+                {(statistics &&
+                    Object.entries(statistics.sector.stats).map(
+                        ([key, value]) => (
+                            <li key={key}>
+                                {
+                                    STATISTICS_NAME[
+                                        key as keyof Statistics["sector"]["stats"]
+                                    ]
+                                }
+                                : {value.toFixed(2)}
+                            </li>
+                        )
+                    )) || <Loader size="sm" />}
+            </Card>
 
             {/* Estatísticas Gerais */}
-            <Card className="p-4">
-                <strong className="block mb-2">Estatísticas Gerais</strong>
-                <ul className="text-sm space-y-1">li</ul>
+            <Card className="p-4 col-span-2">
+                <strong className="block mb-2">📊 Estatísticas Gerais</strong>
+                {(statistics &&
+                    Object.entries(statistics.general.stats).map(
+                        ([key, value]) => (
+                            <li key={key}>
+                                {
+                                    STATISTICS_NAME[
+                                        key as keyof Statistics["general"]["stats"]
+                                    ]
+                                }
+                                : {value.toFixed(2)}
+                            </li>
+                        )
+                    )) || <Loader size="sm" />}
             </Card>
         </div>
     );

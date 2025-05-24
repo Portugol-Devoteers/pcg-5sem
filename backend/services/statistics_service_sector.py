@@ -57,6 +57,7 @@ def gerar_estatisticas_por_setor(sector_id: int) -> dict:
               JOIN history_columns  hc ON hc.id        = p.history_columns_id
               JOIN price_history    ph ON ph.company_id = p.b3_code_id
                                        AND ph.date      = p.date
+                JOIN sectors        s  ON s.id         = c.sector_id
               WHERE hc.column_name ILIKE 'close'
                 AND c.sector_id     = %s
             )
@@ -122,9 +123,9 @@ def gerar_estatisticas_por_setor(sector_id: int) -> dict:
     stats = {
         "MAE":       float(round(mae, 4)),
         "RMSE":      float(round(rmse, 4)),
-        "SMAPE_%":   float(round(smp, 3)),
+        "SMAPE_percentage":   float(round(smp, 3)),
         "R2":        float(round(r2, 4)),
-        "Hit_rate_%":float(round(hitp, 2)),
+        "Hit_rate_percentage":float(round(hitp, 2)),
         "n_obs":     int(len(winners)),
     }
 
@@ -135,7 +136,22 @@ def gerar_estatisticas_por_setor(sector_id: int) -> dict:
         .to_dict(orient="records")
     )
 
-    return {"stats": stats, "winners": winners_json}
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT name
+            FROM sectors
+            WHERE id = %s;
+            """,
+            (sector_id,),
+        )
+        sector_name = cur.fetchone()[0]
+
+    return {
+        "sector_name": sector_name,
+        "stats": stats, 
+        "winners": winners_json
+    }
 
 if __name__ == "__main__":
     setor = 7         # exemplo

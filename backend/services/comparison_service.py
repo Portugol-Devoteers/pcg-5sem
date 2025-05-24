@@ -1,7 +1,5 @@
-# comparison_service.py
 import psycopg
 import pandas as pd
-
 
 # ----------------------------------------------------------------------
 # 1) Conexão ----------------------------------------------------------------
@@ -15,7 +13,6 @@ def get_connection():
         host="localhost",
         port="5432"
     )
-
 
 # ----------------------------------------------------------------------
 # 2) Utilitários de price_history --------------------------------------
@@ -54,7 +51,6 @@ def fetch_price_history_columns(conn, df):
             anterior.append((cur.fetchone() or [None])[0])
 
     return atual, anterior
-
 
 # ----------------------------------------------------------------------
 # 3) Dados de uma empresa (curto / longo / vencedores) -----------------
@@ -144,7 +140,6 @@ def gerar_resumos_empresa(conn, company_id):
 
     return df, vencedores, curto, longo
 
-
 # ----------------------------------------------------------------------
 # 4) Dataset geral (todas as empresas)  --------------------------------
 # ----------------------------------------------------------------------
@@ -213,8 +208,8 @@ def calcular_acuracias(df):
         geral = round(total_acertos / total * 100, 2) if total else None
 
         # up/down
-        tot_up = len(group[group["variance_prediction"] == "up"])
-        tot_dn = len(group[group["variance_prediction"] == "down"])
+        tot_up = len(group[group["variance_prediction"] == "up"]);
+        tot_dn = len(group[group["variance_prediction"] == "down"]);
 
         up_ok = len(
             group[
@@ -231,13 +226,11 @@ def calcular_acuracias(df):
 
         up_acc = round(up_ok / tot_up * 100, 2) if tot_up else None
         dn_acc = round(dn_ok / tot_dn * 100, 2) if tot_dn else None
-        return pd.Series(
-            {
-                "up_accuracy_percent": up_acc,
-                "down_accuracy_percent": dn_acc,
-                "geral_accuracy_percent": geral,
-            }
-        )
+        return pd.Series({
+            "up_accuracy_percent": up_acc,
+            "down_accuracy_percent": dn_acc,
+            "geral_accuracy_percent": geral,
+        })
 
     acertos_modelo = base.groupby("model_name").apply(_agg).reset_index()
     acertos_data = base.groupby("date").apply(_agg).reset_index()
@@ -263,7 +256,6 @@ def anexar_acuracias(df_base, acc_model, acc_date):
     df_out = df_base.merge(acc_model, on="model_name", how="left")
     df_out = df_out.merge(acc_date, on="date", how="left")
     return df_out
-
 
 # ----------------------------------------------------------------------
 # 5) Função principal de serviço ---------------------------------------
@@ -295,58 +287,34 @@ def comparar_dados_empresa(ticker: str):
         at, ant = fetch_price_history_columns(conn, df_all)
         df_all["price_history_value"] = at
         df_all["price_history_value_anterior"] = ant
-        df_all = df_all[df_all["price_history_value"].notnull()].reset_index(
-            drop=True
-        )
-        df_all = adicionar_variancias(
-            df_all
-        )  # adiciona variance_* e accuracy
+        df_all = df_all[df_all["price_history_value"].notnull()].reset_index(drop=True)
+        df_all = adicionar_variancias(df_all)  # adiciona variance_* e accuracy
 
     # ----- acurácias globais
     acc_model, acc_date = calcular_acuracias(df_all)
 
     # ----- consolida acurácias nos DataFrames da empresa
-    df_emp_full = anexar_acuracias(df_emp, acc_model, acc_date)
-    vencedores_full = anexar_acuracias(vencedores_emp, acc_model, acc_date)
+    # df_emp_full = anexar_acuracias(df_emp, acc_model, acc_date)  # UNUSED
+    # vencedores_full = anexar_acuracias(vencedores_emp, acc_model, acc_date)  # UNUSED
     curto_full = anexar_acuracias(curto_emp, acc_model, acc_date)
     longo_full = anexar_acuracias(longo_emp, acc_model, acc_date)
 
-
     return {
-        # "vencedores": data_to_json(vencedores_full),
+        # "vencedores": data_to_json(vencedores_full),  # UNUSED
         "short_term": data_to_json(curto_full),
         "long_term": data_to_json(longo_full),
         "company_name": curto_full["company_name"].iloc[0],
     }
 
+# ----------------------------------------------------------------------
+# Commented out unused utilities to speed up API response
+# ----------------------------------------------------------------------
 def data_to_json(data):
     """
     Converte um DataFrame em um dicionário JSON.
     """
     return data.to_dict(orient="records")
-# ----------------------------------------------------------------------
-# Execução simples -----------------------------------------------------
-# ----------------------------------------------------------------------
+
 if __name__ == "__main__":
     resultado = comparar_dados_empresa("PETR4.SA")
 
-import pandas as pd
-import json
-
-def jsons_to_excel(json_dict, output_file="comparacao_resultados.xlsx"):
-    """
-    Converte dicionário de listas (output de data.to_dict) em múltiplas abas de um Excel.
-
-    :param json_dict: dict {nome: lista_de_dicts}
-    :param output_file: nome do arquivo de saída
-    """
-    with pd.ExcelWriter(output_file) as writer:
-        for nome, json_data in json_dict.items():
-            # Converte lista de dicts para DataFrame
-            df = pd.DataFrame(json_data)
-            # Salva como uma aba no Excel
-            df.to_excel(writer, sheet_name=nome[:31], index=False)  # Excel limita sheet a 31 chars
-
-    print(f"Arquivo Excel salvo como: {output_file}")
-
-# jsons_to_excel(resultado, output_file="resultado_empresa_1.xlsx")
