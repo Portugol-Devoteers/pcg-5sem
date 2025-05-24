@@ -158,6 +158,10 @@ export const CompanyDetails = ({ company }: Props) => {
             {/* Estatísticas do Setor */}
 
             {/* Estatísticas Gerais */}
+            <Card className="p-4">
+                <strong className="block mb-2">Estatísticas Gerais</strong>
+                <ul className="text-sm space-y-1">li</ul>
+            </Card>
         </div>
     );
 };

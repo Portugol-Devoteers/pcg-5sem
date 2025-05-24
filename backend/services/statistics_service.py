@@ -144,9 +144,9 @@ def gerar_estatisticas_gerais() -> Dict[str, Any]:
     stats: Dict[str, Any] = {
         "MAE":        round(mae, 4),
         "RMSE":       round(rmse, 4),
-        "SMAPE_%":    round(smp, 3),
+        "SMAPE_percentage":    round(smp, 3),
         "R2":         round(r2, 4) if not np.isnan(r2) else None,
-        "Hit_rate_%": round(hitp, 2),
+        "Hit_rate_percentage": round(hitp, 2),
         "n_obs":      int(len(winners)),
     }
 
